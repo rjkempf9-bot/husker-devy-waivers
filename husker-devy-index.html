@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Husker Devy Waiver Wire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #171512;
+    --panel: #201d19;
+    --panel-2: #29251f;
+    --line: #3a352c;
+    --line-soft: #2a2620;
+    --scarlet: #d2001f;
+    --scarlet-dim: #7a1420;
+    --bone: #ede6d6;
+    --bone-dim: #b5ac98;
+    --muted: #8a8375;
+    --brass: #c9a227;
+    --brass-dim: #6b5a1c;
+    --good: #4f8f5b;
+    --bad: #b23a3a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--bone);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 80px;}
+  .masthead{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:3px solid var(--scarlet);
+    padding-bottom:14px;margin-bottom:22px;
+  }
+  .masthead h1{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    font-size:30px;
+    letter-spacing:0.5px;
+    margin:0;
+    line-height:1;
+    color:var(--bone);
+  }
+  .masthead h1 span{color:var(--scarlet);}
+  .masthead .tagline{
+    font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-top:4px;
+  }
+  .period-picker{font-size:12px;color:var(--muted);text-align:right;}
+  .period-picker select{
+    background:var(--panel);color:var(--bone);border:1px solid var(--line);
+    border-radius:4px;padding:4px 8px;font-size:12px;margin-top:4px;
+  }
+  .scoreboard{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:16px 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+  }
+  .scoreboard .label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;}
+  .scoreboard .status{font-family:'Anton',sans-serif;font-size:20px;letter-spacing:0.5px;}
+  .status.open{color:var(--good);}
+  .status.closed{color:var(--scarlet);}
+  .status.upcoming{color:var(--brass);}
+  .clock{
+    font-family:'Anton',sans-serif;
+    font-size:26px;
+    letter-spacing:1px;
+    color:var(--bone);
+    background:#000;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:6px 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:20px;
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-family:'Anton',sans-serif;font-weight:400;font-size:16px;letter-spacing:1px;
+    text-transform:uppercase;margin:0 0 14px;color:var(--bone);
+    border-left:4px solid var(--scarlet);padding-left:10px;
+  }
+  label.field-label{
+    display:block;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;
+  }
+  select, input[type=text]{
+    width:100%;
+    background:var(--panel-2);
+    color:var(--bone);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:10px 12px;
+    font-size:14px;
+    font-family:'Inter',sans-serif;
+  }
+  select:focus, input:focus{outline:2px solid var(--scarlet);outline-offset:1px;}
+  .roster-list{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+  .roster-row{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 12px;border:1px solid var(--line);border-radius:4px;
+    background:var(--panel-2);cursor:pointer;
+  }
+  .roster-row.selected{border-color:var(--scarlet);background:rgba(210,0,31,0.12);}
+  .roster-row input{width:auto;}
+  .roster-row .pname{font-size:14px;font-weight:500;}
+  .roster-row .pmeta{font-size:12px;color:var(--muted);}
+  .empty-note{font-size:13px;color:var(--muted);font-style:italic;}
+  .claim-row{
+    display:flex;align-items:center;gap:10px;margin-bottom:10px;
+  }
+  .claim-badge{
+    flex:0 0 30px;height:30px;border-radius:50%;
+    background:var(--brass);color:#221b06;font-family:'Anton',sans-serif;
+    display:flex;align-items:center;justify-content:center;font-size:14px;
+  }
+  .claim-row .claim-input-wrap{flex:1;position:relative;}
+  .claim-row .order-btns{display:flex;flex-direction:column;gap:2px;}
+  .order-btns button{
+    background:var(--panel-2);color:var(--bone-dim);border:1px solid var(--line);
+    border-radius:3px;width:22px;height:16px;font-size:10px;cursor:pointer;line-height:1;
+  }
+  .suggestions{
+    position:absolute;top:100%;left:0;right:0;background:var(--panel-2);
+    border:1px solid var(--line);border-top:none;max-height:180px;overflow-y:auto;
+    z-index:5;border-radius:0 0 4px 4px;
+  }
+  .suggestions div{padding:8px 12px;font-size:13px;cursor:pointer;}
+  .suggestions div:hover{background:var(--scarlet-dim);}
+  .btn{
+    background:var(--panel-2);color:var(--bone);border:1px solid var(--line);
+    border-radius:4px;padding:9px 16px;font-size:13px;cursor:pointer;font-weight:500;
+  }
+  .btn:hover{border-color:var(--bone-dim);}
+  .btn-primary{
+    background:var(--scarlet);border-color:var(--scarlet);color:#fff;
+  }
+  .btn-primary:hover{background:#e8112d;}
+  .btn-small{padding:5px 10px;font-size:12px;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .actions{display:flex;gap:10px;margin-top:16px;align-items:center;}
+  .save-note{font-size:12px;color:var(--muted);}
+  .locked-banner{
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel-2);border:1px dashed var(--line);border-radius:6px;
+    padding:16px;color:var(--muted);font-size:14px;
+  }
+  table.reveal{width:100%;border-collapse:collapse;font-size:13px;}
+  table.reveal th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+    border-bottom:1px solid var(--line);padding:8px 8px;
+  }
+  table.reveal td{border-bottom:1px solid var(--line-soft);padding:8px 8px;vertical-align:top;}
+  table.reveal tr:hover td{background:rgba(255,255,255,0.02);}
+  .claim-pill{
+    display:inline-block;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:3px;padding:2px 6px;margin:0 4px 4px 0;font-size:12px;
+  }
+  .claim-pill b{color:var(--brass);}
+  .drop-pill{color:var(--bad);}
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--bone);color:#161513;padding:10px 18px;border-radius:5px;
+    font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:50;
+  }
+  .toast.show{opacity:1;}
+  .admin-toggle{font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;margin-top:30px;display:inline-block;}
+  .admin-panel{margin-top:12px;}
+  textarea{
+    width:100%;min-height:140px;background:var(--panel-2);color:var(--bone);
+    border:1px solid var(--line);border-radius:4px;padding:10px;font-family:monospace;font-size:12px;
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .muted{color:var(--muted);}
+  .divider{border:none;border-top:1px solid var(--line);margin:16px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>HUSKER DEVY <span>WAIVER WIRE</span></h1>
+      <div class="tagline">Drop &middot; Claim &middot; Repeat monthly</div>
+    </div>
+    <div class="period-picker">
+      Viewing period
+      <br>
+      <select id="periodSelect"></select>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div>
+      <div class="label" id="periodLabel">Period</div>
+      <div class="status" id="periodStatus">&mdash;</div>
+    </div>
+    <div class="clock" id="clock">--:--:--:--</div>
+  </div>
+
+  <div class="card" id="formCard">
+    <h2>Submit your move</h2>
+
+    <label class="field-label">Your team</label>
+    <select id="teamSelect">
+      <option value="">Select your team&hellip;</option>
+    </select>
+
+    <div id="rosterSection" style="margin-top:16px;display:none;">
+      <label class="field-label">Player you are dropping</label>
+      <div class="roster-list" id="rosterList"></div>
+    </div>
+
+    <div id="claimsSection" style="margin-top:20px;display:none;">
+      <label class="field-label">Free agent claims (ranked, up to 5)</label>
+      <div id="claimRows"></div>
+      <button class="btn btn-small" id="addClaimBtn" type="button">+ Add claim</button>
+    </div>
+
+    <div class="actions" id="submitRow" style="display:none;">
+      <button class="btn btn-primary" id="submitBtn" type="button">Submit entry</button>
+      <span class="save-note" id="saveNote"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Results</h2>
+    <div id="revealArea"><div class="locked-banner">Loading&hellip;</div></div>
+  </div>
+
+  <span class="admin-toggle" id="adminToggle">Commissioner tools</span>
+  <div class="admin-panel card" id="adminPanel" style="display:none;">
+    <h2>Commissioner tools</h2>
+    <div id="adminGate">
+      <label class="field-label">Commissioner code</label>
+      <input type="text" id="adminCode" placeholder="Enter code">
+      <div class="actions"><button class="btn" id="adminUnlockBtn" type="button">Unlock</button></div>
+      <p class="muted" style="font-size:12px;">This is a light friction gate, not real security &mdash; anyone with the code (or the browser console) can edit league data.</p>
+    </div>
+    <div id="adminControls" style="display:none;">
+      <div id="dupWarningBox"></div>
+      <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Open a new period</h3>
+      <div class="row2">
+        <div>
+          <label class="field-label">Label</label>
+          <input type="text" id="newPeriodLabel" placeholder="August 2026">
+        </div>
+        <div></div>
+        <div>
+          <label class="field-label">Opens (Central time)</label>
+          <input type="text" id="newPeriodOpen" placeholder="2026-08-03T00:00">
+        </div>
+        <div>
+          <label class="field-label">Closes (Central time)</label>
+          <input type="text" id="newPeriodClose" placeholder="2026-08-08T00:00">
+        </div>
+      </div>
+      <div class="actions"><button class="btn" id="createPeriodBtn" type="button">Create period</button></div>
+      <hr class="divider">
+      <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Rosters &amp; free agent pool (JSON)</h3>
+      <p class="muted" style="font-size:12px;">Edit after you apply drops/adds from a resolved period, so the next period starts from the updated rosters.</p>
+      <textarea id="leagueDataBox"></textarea>
+      <div class="actions"><button class="btn" id="saveLeagueDataBtn" type="button">Save league data</button></div>
+      <hr class="divider">
+      <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Edit periods (JSON)</h3>
+      <p class="muted" style="font-size:12px;">Edit dates on an existing period (e.g. push back a deadline) or remove one. Editing here overrides whatever is currently saved.</p>
+      <textarea id="periodsDataBox"></textarea>
+      <div class="actions"><button class="btn" id="savePeriodsBtn" type="button">Save periods</button></div>
+      <hr class="divider">
+      <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Waiver order (this period)</h3>
+      <p class="muted" style="font-size:12px;">Paste team names in priority order, one per line, highest priority first. Results resolve automatically once this is saved — raw submissions stay hidden from everyone.</p>
+      <textarea id="waiverOrderBox" style="min-height:100px;" placeholder="team1&#10;team2&#10;team3"></textarea>
+      <div class="actions"><button class="btn" id="saveWaiverOrderBtn" type="button">Save waiver order</button></div>
+      <hr class="divider">
+      <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">View raw submissions</h3>
+      <p class="muted" style="font-size:12px;">A separate audit code, for dispute review only. Using it permanently flags this period as reviewed, visible to everyone.</p>
+      <input type="text" id="auditCodeInput" placeholder="Audit code">
+      <div class="actions"><button class="btn" id="viewRawBtn" type="button">View raw submissions</button></div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_DATA = {"owners": {"rkempf": ["Jadan Baugh - RB - Florida", "Jaron-Keawe Sagapolutele - QB - California", "Dallas Wilson - WR - Florida", "Jamari Johnson - TE - Oregon"], "zacher6729": ["Arch Manning - QB - Texas", "Cam Coleman - WR - Auburn", "Bryant Wesco - WR - Clemson", "Nico Iamaleava - QB - UCLA", "Tristen Keys - WR - LSU", "Eugene Wilson III - WR - Florida", "Kewan Lacy - RB - Ole Miss", "Mario Craver - WR - Texas A&M"], "cjpfeil25": ["Trey'Dez Green - TE - LSU"], "aaronwalsh": ["Jeremiah Smith - WR - Ohio St.", "LaNorris Sellers - QB - South Carolina", "TJ Moore - WR - Clemson", "Dante Moore - QB - Oregon", "Jared Curtis - QB - TBD", "Ezavier Crowell - RB - Alabama", "Isaac Brown - RB - Louisville", "Keisean Henderson - QB - Houston"], "dharris11": [], "ckthomps": ["Ryan Williams - WR - Alabama", "Bryce Underwood - QB - Michigan", "Nyck Harbor - WR - South Carolina", "Dakorien Moore - WR - Oregon", "Kaliq Lockett - WR - Texas", "Quincy Porter - WR - Ohio St", "Dylan Raiola - QB - Nebraska", "Savion Hiter - RB - TBD", "Caden Durham - RB - LSU", "Malachi Toney - WR - Miami", "Bo Jackson - RB - Ohio St", "Chris Henry Jr - WR - Ohio St", "Kemon Spell - RB - TBD", "Andrew Marsh - WR - Michigan"], "DeFlon": ["DJ Lagway - QB - Florida", "Drew Mestemaker - QB - Oklahoma St"], "ProfessorFox": ["Brandon Sorsby - QB - Texas Tech"], "DoubleTap7798": [], "stevenkohn": [], "DCloud82": ["Nate Frazier - RB - Georgia", "Keelon Russell - QB - Alabama", "Tavien St. Clair  - QB - Ohio St", "Ryan Wingo - WR - Texas", "Nick Marsh - WR - Mich St", "Caleb Hawkins - RB - Oklahoma St"], "dachronic": ["Justice Haynes - RB - Michigan", "Ahmad Hardy - RB - Missouri", "Julian Sayin - QB - Ohio St", "Charlie Becker - WR - Indiana"]}, "freeAgents": [{"name": "Aaron Gregory", "position": "WR", "college": "Texas A&M"}, {"name": "Aaron Philo", "position": "QB", "college": "Florida"}, {"name": "Abu Sama III", "position": "RB", "college": "Wisconsin"}, {"name": "Adam Mohammed", "position": "RB", "college": "California"}, {"name": "Adjatay Dabbs", "position": "WR", "college": "Toledo"}, {"name": "Adrian Norton", "position": "WR", "college": "Marshall"}, {"name": "Ahmad Hudson", "position": "TE", "college": "High School"}, {"name": "Aidan Chiles", "position": "QB", "college": "Northwestern"}, {"name": "Air Noland", "position": "QB", "college": "Memphis"}, {"name": "AJ Wilson", "position": "WR", "college": "UTSA"}, {"name": "Ajay Allen", "position": "RB", "college": "Western Kentucky"}, {"name": "Akylin Dear", "position": "RB", "college": "Alabama"}, {"name": "Alberto Mendoza", "position": "QB", "college": "Georgia Tech"}, {"name": "Alonza Barnett", "position": "QB", "college": "UCF"}, {"name": "Alton McCaskill", "position": "RB", "college": "Sam Houston State"}, {"name": "Alvin Henderson", "position": "RB", "college": "Auburn"}, {"name": "Amare Thomas", "position": "WR", "college": "Houston"}, {"name": "A'Marion Peterson", "position": "RB", "college": "UTSA"}, {"name": "Andrew Olesh", "position": "TE", "college": "Oregon"}, {"name": "Andrew Rappleyea", "position": "TE", "college": "Penn State"}, {"name": "Aneyas Williams", "position": "RB", "college": "Notre Dame"}, {"name": "Angel Flores", "position": "QB", "college": "Central Michigan"}, {"name": "Anthony Carrie", "position": "RB", "college": "Florida International"}, {"name": "Anthony Colandrea", "position": "QB", "college": "Nebraska"}, {"name": "Anthony Eager", "position": "WR", "college": "South Alabama"}, {"name": "Anthony Evans", "position": "WR", "college": "Mississippi State"}, {"name": "Anthony Garcia", "position": "WR", "college": "Utah State"}, {"name": "Anthony Ivey", "position": "WR", "college": "San Jose State"}, {"name": "Anthony Simpson", "position": "WR", "college": "Toledo"}, {"name": "Antonio Martin", "position": "RB", "college": "Middle Tennessee"}, {"name": "Antwan Raymond", "position": "RB", "college": "Rutgers"}, {"name": "Asaad Waseem", "position": "WR", "college": "Purdue"}, {"name": "Ashton Bethel-Roman", "position": "WR", "college": "Texas A&M"}, {"name": "Ashton Daniels", "position": "QB", "college": "Florida State"}, {"name": "Ashton Gray", "position": "RB", "college": "East Carolina"}, {"name": "Audric Harris", "position": "WR", "college": "Hawai'i"}, {"name": "Austin Mack", "position": "QB", "college": "Alabama"}, {"name": "Austin Novosad", "position": "QB", "college": "Bowling Green"}, {"name": "Austin Simmons", "position": "QB", "college": "Missouri"}, {"name": "Austyn Dendy", "position": "RB", "college": "Bowling Green"}, {"name": "Avery Johnson", "position": "QB", "college": "Kansas State"}, {"name": "Bear Bachmeier", "position": "QB", "college": "BYU"}, {"name": "Beau Pribula", "position": "QB", "college": "Virginia"}, {"name": "Beau Sparks", "position": "WR", "college": "Texas State"}, {"name": "Benjamin Brahmer", "position": "TE", "college": "Penn State"}, {"name": "Benjamin Hall", "position": "RB", "college": "North Carolina"}, {"name": "Benny Okwura", "position": "TE", "college": "UTEP"}, {"name": "Bert Emanuel", "position": "QB", "college": "San Diego State"}, {"name": "Bishop Davenport", "position": "QB", "college": "South Alabama"}, {"name": "Blake Craig", "position": "K", "college": "Missouri"}, {"name": "Bowe Bentley", "position": "QB", "college": "Oklahoma"}, {"name": "Brad Jackson", "position": "QB", "college": "Texas State"}, {"name": "Braden Pegan", "position": "WR", "college": "Utah"}, {"name": "Brady Marchese", "position": "WR", "college": "Auburn"}, {"name": "Brandon Inniss", "position": "WR", "college": "Ohio State"}, {"name": "Branson Robinson", "position": "RB", "college": "Georgia State"}, {"name": "Braxton Woodson", "position": "QB", "college": "Navy"}, {"name": "Braydon Bennett", "position": "RB", "college": "Eastern Michigan"}, {"name": "Braylen Russell", "position": "RB", "college": "Arkansas"}, {"name": "Braylon Staley", "position": "WR", "college": "Tennessee"}, {"name": "Breezy Dubar", "position": "RB", "college": "Missouri State"}, {"name": "Brendan Sorsby", "position": "QB", "college": "Texas Tech"}, {"name": "Brett Eskildsen", "position": "WR", "college": "Penn State"}, {"name": "Brett Norfleet", "position": "TE", "college": "Missouri"}, {"name": "Brian Bonner Jr", "position": "RB", "college": "Washington"}, {"name": "Brian Rowe", "position": "WR", "college": "UCLA"}, {"name": "Broc Lowry", "position": "QB", "college": "Western Michigan"}, {"name": "Brock Harris", "position": "TE", "college": "BYU"}, {"name": "Brock Spalding", "position": "WR", "college": "East Carolina"}, {"name": "Brock Taylor", "position": "K", "college": "Vanderbilt"}, {"name": "Brody Foley", "position": "TE", "college": "Louisville"}, {"name": "Bryce Baker", "position": "QB", "college": "Virginia Tech"}, {"name": "Brysen Wright", "position": "WR", "college": "High School"}, {"name": "Bryson Donelson", "position": "RB", "college": "Fresno State"}, {"name": "Bryson Graves", "position": "WR", "college": "Delaware"}, {"name": "Bryson Washington", "position": "RB", "college": "Auburn"}, {"name": "Byrum Brown", "position": "QB", "college": "Auburn"}, {"name": "Cade Keith", "position": "TE", "college": "New Mexico"}, {"name": "Caden Creel", "position": "QB", "college": "Jacksonville State"}, {"name": "Caden Jensen", "position": "TE", "college": "Louisiana"}, {"name": "Caden Knighten", "position": "RB", "college": "Baylor"}, {"name": "Caden Veltkamp", "position": "QB", "college": "Florida Atlantic"}, {"name": "Cale Hellums", "position": "QB", "college": "Army"}, {"name": "Caleb Cunningham", "position": "WR", "college": "Ole Miss"}, {"name": "Caleb Komolafe", "position": "RB", "college": "Northwestern"}, {"name": "Caleb Odom", "position": "TE", "college": "Ole Miss"}, {"name": "Calvin Russell", "position": "WR", "college": "Syracuse"}, {"name": "Cam Barfield", "position": "RB", "college": "Hawai'i"}, {"name": "Cam Cook", "position": "RB", "college": "West Virginia"}, {"name": "Cam Edwards", "position": "RB", "college": "Michigan State"}, {"name": "Cam Thompson", "position": "WR", "college": "Northern Illinois"}, {"name": "Cameran Brown", "position": "QB", "college": "Georgia State"}, {"name": "Cameron Cooke", "position": "WR", "college": "Nevada"}, {"name": "Cameron Dickey", "position": "RB", "college": "Texas Tech"}, {"name": "Cameron Flowers", "position": "WR", "college": "Western Kentucky"}, {"name": "Cameron Seldon", "position": "WR", "college": "South Florida"}, {"name": "Carlos Del Rio-Wilson", "position": "QB", "college": "Marshall"}, {"name": "Carlos Hernandez", "position": "WR", "college": "Wake Forest"}, {"name": "Carson Clark", "position": "WR", "college": "San Jose State"}, {"name": "Carson Gulker", "position": "TE", "college": "Michigan State"}, {"name": "Carson Hansen", "position": "RB", "college": "Penn State"}, {"name": "Cataurus Hicks", "position": "WR", "college": "Pittsburgh"}, {"name": "Cayden Lee", "position": "WR", "college": "Missouri"}, {"name": "Cederian Morgan", "position": "WR", "college": "Alabama"}, {"name": "Cedric Kouemi", "position": "RB", "college": "Jacksonville State"}, {"name": "Chas Nimrod", "position": "WR", "college": "Auburn"}, {"name": "Chase Hendricks", "position": "WR", "college": "California"}, {"name": "Chase Sowell", "position": "WR", "college": "Penn State"}, {"name": "Chauncy Cobb", "position": "WR", "college": "Arkansas State"}, {"name": "Chris Corbo", "position": "TE", "college": "Georgia Tech"}, {"name": "Chris Dawn", "position": "WR", "college": "Texas State"}, {"name": "Chris Durr", "position": "WR", "college": "Maryland"}, {"name": "Chris Jimerson", "position": "QB", "college": "North Texas"}, {"name": "Chris Johnson", "position": "RB", "college": "Clemson"}, {"name": "Chris Lofton", "position": "WR", "college": "Appalachian State"}, {"name": "Chris Marshall", "position": "WR", "college": "Arkansas"}, {"name": "Chrishon McCray", "position": "WR", "college": "Michigan State"}, {"name": "Christian Bentancur", "position": "TE", "college": "Clemson"}, {"name": "Christian Clark", "position": "RB", "college": "South Carolina"}, {"name": "Christopher Barnes", "position": "LB", "college": "Alabama A&M"}, {"name": "Christopher Vizzina", "position": "QB", "college": "Clemson"}, {"name": "CJ Bailey", "position": "QB", "college": "NC State"}, {"name": "CJ Baxter", "position": "RB", "college": "Kentucky"}, {"name": "CJ Carr", "position": "QB", "college": "Notre Dame"}, {"name": "CJ Miller", "position": "RB", "college": "Toledo"}, {"name": "CJ Wiley", "position": "WR", "college": "Georgia"}, {"name": "Clayton Coppock", "position": "WR", "college": "Coastal Carolina"}, {"name": "Cody Hagen", "position": "WR", "college": "BYU"}, {"name": "Cody Jackson", "position": "WR", "college": "Iowa State"}, {"name": "Cole Cabana", "position": "RB", "college": "Western Michigan"}, {"name": "Cole Rusk", "position": "TE", "college": "Arizona"}, {"name": "Cole Spence", "position": "TE", "college": "Vanderbilt"}, {"name": "Cole Weaver", "position": "WR", "college": "Syracuse"}, {"name": "Collin Dixon", "position": "WR", "college": "Illinois"}, {"name": "Colton Boomer", "position": "K", "college": "Boise State"}, {"name": "Colton Joseph", "position": "QB", "college": "Wisconsin"}, {"name": "Conner Weigman", "position": "QB", "college": "Houston"}, {"name": "Connor Hawkins", "position": "K", "college": "Ohio State"}, {"name": "Cooper Barkate", "position": "WR", "college": "Miami (FL)"}, {"name": "Cooper Flanagan", "position": "TE", "college": "Notre Dame"}, {"name": "Cooper Perry", "position": "WR", "college": "California"}, {"name": "Cooper Ranvier", "position": "K/P", "college": "Tennessee"}, {"name": "Corey Barber", "position": "WR", "college": "LSU"}, {"name": "Cornell Hatcher", "position": "RB", "college": "Oregon State"}, {"name": "Corri Milliner", "position": "WR", "college": "North Texas"}, {"name": "Coy Eakin", "position": "WR", "college": "Texas Tech"}, {"name": "Cutter Boley", "position": "QB", "college": "Arizona State"}, {"name": "Cyncir Bowers", "position": "RB", "college": "UConn"}, {"name": "Dakota Guerrant", "position": "WR", "college": "High School"}, {"name": "Dallan Hayden", "position": "RB", "college": "Memphis"}, {"name": "Daniel Hill", "position": "RB", "college": "Alabama"}, {"name": "Danny Scudero", "position": "WR", "college": "Colorado"}, {"name": "Darian Mensah", "position": "QB", "college": "Miami (FL)"}, {"name": "Darius Johnson", "position": "WR", "college": "Syracuse"}, {"name": "Darius Taylor", "position": "RB", "college": "Minnesota"}, {"name": "Darrell Gill", "position": "WR", "college": "Ole Miss"}, {"name": "David Amador", "position": "WR", "college": "UTSA"}, {"name": "David Eziomume", "position": "RB", "college": "Clemson"}, {"name": "David Gabriel", "position": "RB", "college": "High School"}, {"name": "Davis Dalton", "position": "WR", "college": "Southern Miss"}, {"name": "Dawson Pendergrass", "position": "RB", "college": "Baylor"}, {"name": "DeAndre Moore", "position": "WR", "college": "Colorado"}, {"name": "DeAree Rogers", "position": "WR", "college": "Northern Illinois"}, {"name": "Decker DeGraaf", "position": "TE", "college": "Washington"}, {"name": "DeJuan Williams", "position": "RB", "college": "Maryland"}, {"name": "Demarcus Lacey", "position": "WR", "college": "Marshall"}, {"name": "Demick Starling", "position": "WR", "college": "Utah State"}, {"name": "Demon June", "position": "RB", "college": "North Carolina"}, {"name": "Demond Williams Jr", "position": "QB", "college": "Washington"}, {"name": "Deondre Johnson", "position": "WR", "college": "Jacksonville State"}, {"name": "Derrek Cooper", "position": "RB", "college": "Texas"}, {"name": "Derrick Avery", "position": "WR", "college": "Georgia State"}, {"name": "Desean Bishop", "position": "RB", "college": "Tennessee"}, {"name": "Deshonne Redeaux", "position": "RB", "college": "USC"}, {"name": "Destyn Hill", "position": "WR", "college": "Tulane"}, {"name": "Deuce Knight", "position": "QB", "college": "Ole Miss"}, {"name": "Devin Brown", "position": "QB", "college": "Weber State"}, {"name": "Devin Fitzgerald", "position": "WR", "college": "Notre Dame"}, {"name": "Devin McCuin", "position": "WR", "college": "Ohio State"}, {"name": "Devin Roche", "position": "RB", "college": "Old Dominion"}, {"name": "Devon Dampier", "position": "QB", "college": "Utah"}, {"name": "Dezmen Roebuck", "position": "WR", "college": "Washington"}, {"name": "Dia Bell", "position": "QB", "college": "Texas"}, {"name": "Dierre Hill Jr", "position": "RB", "college": "Oregon"}, {"name": "Dilin Jones", "position": "RB", "college": "LSU"}, {"name": "Diore Hubbard", "position": "RB", "college": "Wyoming"}, {"name": "DJ Miller", "position": "WR", "college": "Kentucky"}, {"name": "DJ Riles", "position": "WR", "college": "Georgia State"}, {"name": "DJ Scott", "position": "RB", "college": "North Dakota State"}, {"name": "DJ Vonnahme", "position": "TE", "college": "Iowa"}, {"name": "Dominic De Freitas", "position": "K", "college": "North Texas"}, {"name": "Dominic Lee-Knicely", "position": "RB", "college": "Coastal Carolina"}, {"name": "Dominic Overby", "position": "WR", "college": "Iowa State"}, {"name": "Donovan Green", "position": "TE", "college": "Oklahoma State"}, {"name": "Donovan Olugbode", "position": "WR", "college": "Missouri"}, {"name": "Dontavius Braswell", "position": "RB", "college": "Georgia State"}, {"name": "Dorian Fleming", "position": "TE", "college": "Maryland"}, {"name": "Dorian Thomas", "position": "TE", "college": "California"}, {"name": "Drake Lindsey", "position": "QB", "college": "Minnesota"}, {"name": "Dramekco Green", "position": "RB", "college": "SMU"}, {"name": "Dre'lon Miller", "position": "WR", "college": "Baylor"}, {"name": "Duce Robinson", "position": "TE", "college": "Florida State"}, {"name": "Duke Watson", "position": "RB", "college": "UCF"}, {"name": "Duncan Brune", "position": "RB", "college": "Ohio"}, {"name": "Durell Robinson", "position": "RB", "college": "Colorado State"}, {"name": "Dylan Edwards", "position": "RB", "college": "Kansas"}, {"name": "Dylan Riley", "position": "RB", "college": "Boise State"}, {"name": "Dylan Wade", "position": "TE", "college": "UCF"}, {"name": "Easton Messer", "position": "WR", "college": "Florida Atlantic"}, {"name": "Easton Royal", "position": "WR", "college": "High School"}, {"name": "Ed Small", "position": "WR", "college": "TCU"}, {"name": "EJ Colson", "position": "QB", "college": "UTEP"}, {"name": "EJ Crowell", "position": "RB", "college": "Alabama"}, {"name": "Eli Finley", "position": "TE", "college": "Louisiana Tech"}, {"name": "Elija Lofton", "position": "TE", "college": "Miami (FL)"}, {"name": "Elijah Davis", "position": "RB", "college": "Old Dominion"}, {"name": "Elijah Haven", "position": "QB", "college": "High School"}, {"name": "Elijah Newman Hall", "position": "RB", "college": "Ohio St"}, {"name": "Elijah Thomas", "position": "WR", "college": "Oklahoma"}, {"name": "Elyiss Williams", "position": "TE", "college": "Georgia"}, {"name": "Emmett Mosley", "position": "WR", "college": "Texas"}, {"name": "Eric Singleton Jr", "position": "WR", "college": "Florida"}, {"name": "Ethan Davis", "position": "TE", "college": "Tennessee"}, {"name": "Ethan Feaster", "position": "WR", "college": "USC"}, {"name": "Ethan Grunkmeyer", "position": "QB", "college": "Virginia Tech"}, {"name": "Evan Dickens", "position": "RB", "college": "Boston College"}, {"name": "Evan Pryor", "position": "RB", "college": "Florida"}, {"name": "Evan Stewart", "position": "WR", "college": "Oregon"}, {"name": "Faizon Brandon", "position": "QB", "college": "Tennessee"}, {"name": "Fluff Bothwell", "position": "RB", "college": "Mississippi State"}, {"name": "Gabe Burkle", "position": "TE", "college": "Penn State"}, {"name": "Gage Hurych", "position": "K", "college": "Oregon"}, {"name": "Garrett Oakley", "position": "TE", "college": "Kansas State"}, {"name": "Gary Bryant Jr", "position": "WR", "college": "Oregon"}, {"name": "Gatlin Blair", "position": "WR", "college": "Oregon"}, {"name": "Gavin Freeman", "position": "WR", "college": "Baylor"}, {"name": "Gavin Harris", "position": "TE", "college": "Georgia Tech"}, {"name": "Gavin Mueller", "position": "TE", "college": "Miami"}, {"name": "Gavin Sawchuck", "position": "RB", "college": "Northwestern"}, {"name": "George Burhenn", "position": "TE", "college": "Purdue"}, {"name": "George MacIntyre", "position": "QB", "college": "Tennessee"}, {"name": "George Pettaway", "position": "RB", "college": "James Madison"}, {"name": "Gianni Spetic", "position": "K", "college": "Texas"}, {"name": "Gideon Davidson", "position": "RB", "college": "Clemson"}, {"name": "Godspower Nwawuihe", "position": "RB", "college": "Army"}, {"name": "Grant Hollier", "position": "TE", "college": "Georgia State"}, {"name": "Greg Gaines", "position": "WR", "college": "Florida International"}, {"name": "Griffin Wilde", "position": "WR", "college": "Northwestern"}, {"name": "Gunner Stockton", "position": "QB", "college": "Georgia"}, {"name": "Harlem Berry", "position": "RB", "college": "LSU"}, {"name": "Hauss Hejny", "position": "QB", "college": "Colorado State"}, {"name": "Hayden Hansen", "position": "TE", "college": "Oklahoma"}, {"name": "Hogan Hansen", "position": "TE", "college": "Michigan"}, {"name": "Hollywood Smothers", "position": "RB", "college": "Texas"}, {"name": "Houston Thomas", "position": "TE", "college": "Texas A&M"}, {"name": "Howard Kinchen", "position": "WR", "college": "Troy"}, {"name": "Hudson Clement", "position": "WR", "college": "Illinois"}, {"name": "Hunter Andrews", "position": "TE", "college": "Utah"}, {"name": "Hunter Tipton", "position": "TE", "college": "Memphis"}, {"name": "Husan Longstreet", "position": "QB", "college": "LSU"}, {"name": "Hykeem Williams", "position": "WR", "college": "Colorado"}, {"name": "Ian Premer", "position": "TE", "college": "Notre Dame"}, {"name": "Ian Strong", "position": "WR", "college": "California"}, {"name": "Isaiah Horton", "position": "WR", "college": "Texas A&M"}, {"name": "Isaiah Marshall", "position": "QB", "college": "Kansas"}, {"name": "Isaiah Sategna III", "position": "WR", "college": "Oklahoma"}, {"name": "Isaiah West", "position": "RB", "college": "Ohio State"}, {"name": "Isiah Augustave", "position": "RB", "college": "South Carolina"}, {"name": "Iverson Hooks", "position": "WR", "college": "Oregon"}, {"name": "Jabari Mack", "position": "WR", "college": "LSU"}, {"name": "Jack Olsen", "position": "K", "college": "Miami (FL)"}, {"name": "Jackson Arnold", "position": "QB", "college": "UNLV"}, {"name": "Jackson Gutierrez", "position": "QB", "college": "Navy"}, {"name": "Jackson Harris", "position": "WR", "college": "LSU"}, {"name": "Jackson Williams", "position": "WR", "college": "North Dakota State"}, {"name": "Jacory Barney", "position": "WR", "college": "Nebraska"}, {"name": "Jacquon Gibson", "position": "WR", "college": "Virginia"}, {"name": "Jacurri Brown", "position": "QB", "college": "Rice"}, {"name": "Jaden Barnes", "position": "WR", "college": "Charlotte"}, {"name": "Jaden Craig", "position": "QB", "college": "TCU"}, {"name": "Jaden Greathouse", "position": "WR", "college": "Notre Dame"}, {"name": "Jaden Miller", "position": "RB", "college": "Louisiana Tech"}, {"name": "Jaden Rashada", "position": "QB", "college": "Mississippi State"}, {"name": "Jaden Reddell", "position": "TE", "college": "Georgia"}, {"name": "Jahiem White", "position": "RB", "college": "North Texas"}, {"name": "Jaime Ffrench", "position": "WR", "college": "Michigan"}, {"name": "Jake Fette", "position": "QB", "college": "Arizona St"}, {"name": "Jake Johnson", "position": "TE", "college": "North Carolina"}, {"name": "Jaleel Skinner", "position": "TE", "college": "Louisville"}, {"name": "Jalen Buckley", "position": "RB", "college": "Western Michigan"}, {"name": "Jalen Cooper", "position": "WR", "college": "SMU"}, {"name": "Jalen Hale", "position": "WR", "college": "SMU"}, {"name": "Jalen Lott", "position": "WR", "college": "Oregon"}, {"name": "Jamal Roberts", "position": "RB", "college": "Missouri"}, {"name": "Jamal Rule", "position": "RB", "college": "Nebraska"}, {"name": "Jamar Curtis", "position": "RB", "college": "Sacramento State"}, {"name": "Jamarion Morrow", "position": "RB", "college": "Texas A&M"}, {"name": "Jamauri McClure", "position": "RB", "college": "Tulane"}, {"name": "James Jones", "position": "RB", "college": "New Mexico State"}, {"name": "James Peoples", "position": "RB", "college": "Penn State"}, {"name": "Jamier Brown", "position": "WR", "college": "High School"}, {"name": "Jaquaize Pettaway", "position": "WR", "college": "East Carolina"}, {"name": "Jaquari Lewis", "position": "RB", "college": "Appalachian State"}, {"name": "Jared Richardson", "position": "WR", "college": "Duke"}, {"name": "Jaron Tibbs", "position": "WR", "college": "Kansas State"}, {"name": "Jasaiah Gathings", "position": "WR", "college": "Buffalo"}, {"name": "Jase Matthews", "position": "WR", "college": "Ole Miss"}, {"name": "Jason Brown", "position": "RB", "college": "Arizona State"}, {"name": "Javen Jacobs", "position": "RB", "college": "Utah State"}, {"name": "Javen Nicholas", "position": "WR", "college": "Duke"}, {"name": "Javian Osborne", "position": "RB", "college": "Notre Dame"}, {"name": "Javin Gordon", "position": "RB", "college": "Tennessee"}, {"name": "Javon Robinson", "position": "WR", "college": "Utah State"}, {"name": "Javon Tracy", "position": "WR", "college": "Minnesota"}, {"name": "Jaxxon Warren", "position": "TE", "college": "North Carolina"}, {"name": "Jayce Brown", "position": "WR", "college": "LSU"}, {"name": "Jayden Ballard", "position": "WR", "college": "Wisconsin"}, {"name": "Jayden Limar", "position": "RB", "college": "Washington"}, {"name": "Jayden Maiava", "position": "QB", "college": "USC"}, {"name": "Jaylen Addai", "position": "WR", "college": "High School"}, {"name": "Jaylen Jenkins", "position": "RB", "college": "Texas State"}, {"name": "Jaylen Raynor", "position": "QB", "college": "Iowa State"}, {"name": "Jaylin Carter", "position": "RB", "college": "Memphis"}, {"name": "Jayshon Platt", "position": "WR", "college": "Illinois"}, {"name": "JC French", "position": "QB", "college": "Cincinnati"}, {"name": "Jeffrey Overton", "position": "RB", "college": "Virginia Tech"}, {"name": "Jekail Middlebrook", "position": "RB", "college": "Virginia"}, {"name": "Jelani Thurman", "position": "TE", "college": "North Carolina"}, {"name": "Jeremiah Cobb", "position": "RB", "college": "Auburn"}, {"name": "Jeremiah Hasley", "position": "TE", "college": "Duke"}, {"name": "Jeremiah Koger", "position": "WR", "college": "Auburn"}, {"name": "Jeremiah McClellan", "position": "WR", "college": "Oregon"}, {"name": "Jeremy Payne", "position": "RB", "college": "TCU"}, {"name": "Jeremy Scott", "position": "WR", "college": "TCU"}, {"name": "Jermaine Bishop", "position": "WR", "college": "Texas"}, {"name": "Jerome Myles", "position": "WR", "college": "Texas A&M"}, {"name": "Jeron Askren", "position": "TE", "college": "Missouri State"}, {"name": "Jerquaden Guilford", "position": "WR", "college": "Ohio St"}, {"name": "Jerrick Gibson", "position": "RB", "college": "Purdue"}, {"name": "Jett Harrison", "position": "WR", "college": "High School"}, {"name": "Jett Thomalla", "position": "QB", "college": "Alabama"}, {"name": "JJ Buchanan", "position": "TE", "college": "Michigan"}, {"name": "JJ Kohl", "position": "QB", "college": "Florida International"}, {"name": "Jmariyae Robinson", "position": "WR", "college": "Missouri State"}, {"name": "Joe Jackson", "position": "RB", "college": "Kansas State"}, {"name": "John Mateer", "position": "QB", "college": "Oklahoma"}, {"name": "Johntay Cook", "position": "WR", "college": "Ole Miss"}, {"name": "Jojo Phillips", "position": "WR", "college": "BYU"}, {"name": "Jonathan Hatton Jr", "position": "RB", "college": "Oklahoma"}, {"name": "Jonaz Walton", "position": "RB", "college": "Notre Dame"}, {"name": "Jordan Allen", "position": "WR", "college": "Georgia Tech"}, {"name": "Jordan Dwyer", "position": "WR", "college": "TCU"}, {"name": "Jordan Faison", "position": "WR", "college": "Notre Dame"}, {"name": "Jordan Gant", "position": "RB", "college": "Akron"}, {"name": "Jordan Lovett", "position": "RB", "college": "Troy"}, {"name": "Jordan Lyle", "position": "RB", "college": "Miami (Fl)"}, {"name": "Jordan Marshall", "position": "RB", "college": "Michigan"}, {"name": "Jordan Napier", "position": "WR", "college": "San Diego State"}, {"name": "Jordan Shipp", "position": "WR", "college": "North Carolina"}, {"name": "Jordan Washington", "position": "RB", "college": "UMass"}, {"name": "Jordan Williams", "position": "TE", "college": "Texas State"}, {"name": "Jordon Davison", "position": "RB", "college": "Oregon"}, {"name": "Joseph Williams", "position": "WR", "college": "Colorado"}, {"name": "Josh Dallas", "position": "WR", "college": "Georgia Southern"}, {"name": "Josh Derry", "position": "WR", "college": "UCF"}, {"name": "Josh Hoover", "position": "QB", "college": "Indiana"}, {"name": "Joshisa Trader", "position": "WR", "college": "North Carolina State"}, {"name": "Joshua Long", "position": "TE", "college": "Eastern Michigan"}, {"name": "Joshua Moore", "position": "WR", "college": "Miami (FL)"}, {"name": "Josiah Freeman", "position": "WR", "college": "Fresno State"}, {"name": "Jovantae Barnes", "position": "RB", "college": "Kentucky"}, {"name": "JT Lindsey", "position": "RB", "college": "Ole Miss"}, {"name": "Juice Vereen", "position": "TE", "college": "Colorado State"}, {"name": "Julian Lewis", "position": "QB", "college": "Colorado"}, {"name": "Junior Sherrill", "position": "WR", "college": "Vanderbilt"}, {"name": "Justin Bowick", "position": "WR", "college": "Oklahoma State"}, {"name": "Justin Marshall", "position": "RB", "college": "Liberty"}, {"name": "Justus Savage", "position": "RB", "college": "Jacksonville State"}, {"name": "K.J. Edwards", "position": "RB", "college": "Texas A&M"}, {"name": "Kaden Feagin", "position": "RB", "college": "Illinois"}, {"name": "Kaelan Chudzinski", "position": "TE", "college": "Boston College"}, {"name": "Kaiden Prothro", "position": "TE", "college": "Georgia"}, {"name": "Kaleb Brown", "position": "WR", "college": "UAB"}, {"name": "Kaleb Edwards", "position": "TE", "college": "Alabama"}, {"name": "Kaleb Jackson", "position": "RB", "college": "North Carolina"}, {"name": "Kam Thomas", "position": "RB", "college": "UTEP"}, {"name": "Kamari Moulton", "position": "RB", "college": "Iowa"}, {"name": "KaMario Taylor", "position": "QB", "college": "Mississippi State"}, {"name": "Kanye Udoh", "position": "RB", "college": "Liberty"}, {"name": "Katin Houser", "position": "QB", "college": "Illinois"}, {"name": "Kayden Dixon-Wyatt", "position": "WR", "college": "USC"}, {"name": "Kedren Young", "position": "RB", "college": "Notre Dame"}, {"name": "Kedrick Reescano", "position": "RB", "college": "Arizona"}, {"name": "Keenan Phillips", "position": "RB", "college": "South Alabama"}, {"name": "Keith Reynolds", "position": "WR", "college": "Miami (OH)"}, {"name": "Kendre Harrison", "position": "TE", "college": "Oregon"}, {"name": "Kendrick Raphael", "position": "RB", "college": "SMU"}, {"name": "Kenji Christian", "position": "RB", "college": "UConn"}, {"name": "Kenny Johnson", "position": "WR", "college": "Texas Tech"}, {"name": "Kenny Minchey", "position": "QB", "college": "Kentucky"}, {"name": "Kenny Odom", "position": "WR", "college": "South Florida"}, {"name": "Kenyon Clay", "position": "RB", "college": "Arkansas State"}, {"name": "Keshaun Singleton", "position": "WR", "college": "Auburn"}, {"name": "Kevin Jennings", "position": "QB", "college": "SMU"}, {"name": "Kevin Roche", "position": "TE", "college": "Georgia Tech"}, {"name": "Keyjuan Brown", "position": "RB", "college": "Louisville"}, {"name": "Khamari Anderson", "position": "TE", "college": "Arizona State"}, {"name": "Khobie Martin", "position": "RB", "college": "Indiana"}, {"name": "Khristian Lando", "position": "RB", "college": "Jacksonville State"}, {"name": "King Miller", "position": "RB", "college": "USC"}, {"name": "Kirby Vorhees", "position": "RB", "college": "Washington State"}, {"name": "Kirk Francis", "position": "QB", "college": "Texas Tech"}, {"name": "KJ Duff", "position": "WR", "college": "Rutgers"}, {"name": "KJ Jackson", "position": "QB", "college": "Arkansas"}, {"name": "Koby Howard", "position": "WR", "college": "Penn St"}, {"name": "Kwazi Gilmer", "position": "WR", "college": "Nebraska"}, {"name": "Kyler Kasper", "position": "WR", "college": "BYU"}, {"name": "Kyri Shoels", "position": "WR", "college": "Utah"}, {"name": "Kyrion Grayes", "position": "WR", "college": "California"}, {"name": "Kyson Brown", "position": "RB", "college": "Arizona State"}, {"name": "L.J. Martin", "position": "RB", "college": "BYU"}, {"name": "L.J. Phillips", "position": "RB", "college": "Iowa"}, {"name": "Landon Sides", "position": "WR", "college": "East Carolina"}, {"name": "Langston Lewis", "position": "WR", "college": "Central Michigan"}, {"name": "Larenzo Fenner", "position": "WR", "college": "Cincinnati"}, {"name": "Lawayne McCoy", "position": "WR", "college": "Louisville"}, {"name": "Lawson Luckie", "position": "TE", "college": "Georgia"}, {"name": "Legend Bey", "position": "WR", "college": "Ohio State"}, {"name": "Leonard Farrow", "position": "RB", "college": "Florida Atlantic"}, {"name": "Liam Szarka", "position": "QB", "college": "Air Force"}, {"name": "Lincoln Kienholz", "position": "QB", "college": "Louisville"}, {"name": "Linkon Cure", "position": "TE", "college": "Kansas State"}, {"name": "LJ Johnson", "position": "RB", "college": "California"}, {"name": "London Humphries", "position": "WR", "college": "Georgia"}, {"name": "Lotzeir Brooks", "position": "WR", "college": "Alabama"}, {"name": "Louis Brown", "position": "WR", "college": "Baylor"}, {"name": "Lucas Carneiro", "position": "K", "college": "Ole Miss"}, {"name": "Lucky Sutton", "position": "RB", "college": "San Diego State"}, {"name": "Luke Dehnicke", "position": "TE", "college": "Northwestern"}, {"name": "Luke Hasz", "position": "TE", "college": "Ole Miss"}, {"name": "Luke Kromenhoek", "position": "QB", "college": "South Florida"}, {"name": "Luke Reynolds", "position": "TE", "college": "Virginia Tech"}, {"name": "Luke Weaver", "position": "QB", "college": "San Jose State"}, {"name": "Mack Sutter", "position": "TE", "college": "Alabama"}, {"name": "Maddux Madsen", "position": "QB", "college": "Boise State"}, {"name": "Makhi Hughes", "position": "RB", "college": "Houston"}, {"name": "Malachi Coleman", "position": "WR", "college": "Wisconsin"}, {"name": "Malachi Hosley", "position": "RB", "college": "Georgia Tech"}, {"name": "Malachi Nelson", "position": "QB", "college": "Syracuse"}, {"name": "Malachi Riley", "position": "WR", "college": "San Jose State"}, {"name": "Malachi Singleton", "position": "QB", "college": "Appalachian State"}, {"name": "Malcolm Simmons", "position": "WR", "college": "Texas Tech"}, {"name": "Malik Clark", "position": "WR", "college": "South Carolina"}, {"name": "Malik Knight", "position": "WR", "college": "Pittsburgh"}, {"name": "Malik Washington", "position": "QB", "college": "Maryland"}, {"name": "Marcel Reed", "position": "QB", "college": "Texas A&M"}, {"name": "Marcel Williams", "position": "WR", "college": "Akron"}, {"name": "Marcellous Hawkins", "position": "RB", "college": "Virginia Tech"}, {"name": "Marcus Stokes", "position": "QB", "college": "Memphis"}, {"name": "Mark Bowman", "position": "TE", "college": "USC"}, {"name": "Mark Fletcher", "position": "RB", "college": "Miami (FL)"}, {"name": "Marquise Davis", "position": "RB", "college": "Louisville"}, {"name": "Marshall Manning", "position": "QB", "college": "High School"}, {"name": "Mason Heintschel", "position": "QB", "college": "Pittsburgh"}, {"name": "Mason McKenzie", "position": "QB", "college": "Boston College"}, {"name": "Mason Mini", "position": "TE", "college": "California"}, {"name": "Matt Wagner", "position": "TE", "college": "Boise State"}, {"name": "Matt Zollers", "position": "QB", "college": "Missouri"}, {"name": "Max Dowling", "position": "TE", "college": "UMass"}, {"name": "Max Hunt", "position": "TE", "college": "Pittsburgh"}, {"name": "Max Johnson", "position": "QB", "college": "Georgia Southern"}, {"name": "Max Reese", "position": "TE", "college": "North Texas"}, {"name": "Maxwell Woods", "position": "RB", "college": "Washington State"}, {"name": "Mazeo Bennett", "position": "WR", "college": "South Carolina"}, {"name": "McCae Hillstead", "position": "QB", "college": "Utah State"}, {"name": "Mekhi Nelson", "position": "RB", "college": "Nebraska"}, {"name": "Mel Brown", "position": "RB", "college": "Colorado State"}, {"name": "Messiah Mickens", "position": "RB", "college": "Virginia Tech"}, {"name": "Micah Alejado", "position": "QB", "college": "Hawai'i"}, {"name": "Micah Ford", "position": "RB", "college": "Stanford"}, {"name": "Micah Hudson", "position": "WR", "college": "Texas Tech"}, {"name": "Micah Mays", "position": "WR", "college": "Florida"}, {"name": "Micahi Danzy", "position": "WR", "college": "Florida State"}, {"name": "Michael Hawkins", "position": "QB", "college": "West Virginia"}, {"name": "Michael Masunas", "position": "TE", "college": "Texas"}, {"name": "Michael Petro", "position": "K", "college": "UTSA"}, {"name": "Michael Terry III", "position": "RB", "college": "Texas"}, {"name": "Michael Van Buren", "position": "QB", "college": "South Florida"}, {"name": "Mike Matthews", "position": "WR", "college": "Tennessee"}, {"name": "Milan Parris", "position": "WR", "college": "Miami (Fl)"}, {"name": "Miles Coleman", "position": "WR", "college": "Oklahoma State"}, {"name": "Monshun Sales", "position": "WR", "college": "High School"}, {"name": "Mudia Reuben", "position": "WR", "college": "South Florida"}, {"name": "Mylan Graham", "position": "WR", "college": "Notre Dame"}, {"name": "Naeem Burroughs", "position": "WR", "college": "Clemson"}, {"name": "Nate Sheppard", "position": "RB", "college": "Duke"}, {"name": "Nathan Hayes", "position": "QB", "college": "North Dakota State"}, {"name": "Nathan Leacock", "position": "WR", "college": "North Carolina"}, {"name": "Nic Anderson", "position": "WR", "college": "Kentucky"}, {"name": "Nick Devereaux", "position": "WR", "college": "Eastern Michigan"}, {"name": "Nick Evers", "position": "QB", "college": "Missouri"}, {"name": "Nick Herman", "position": "RB", "college": "James Madison"}, {"name": "Nick Minicucci", "position": "QB", "college": "Delaware"}, {"name": "Nick Poulos", "position": "QB", "college": "Ohio"}, {"name": "Nik McMillan", "position": "WR", "college": "Kansas"}, {"name": "Noah Fifita", "position": "QB", "college": "Arizona"}, {"name": "Noah Kim", "position": "QB", "college": "Eastern Michigan"}, {"name": "Noah Meyers", "position": "TE", "college": "Syracuse"}, {"name": "Noah Rogers", "position": "WR", "college": "Alabama"}, {"name": "Nolan James", "position": "RB", "college": "Notre Dame"}, {"name": "Nyziah Hunter", "position": "WR", "college": "Nebraska"}, {"name": "Omarion Miller", "position": "WR", "college": "Arizona State"}, {"name": "Ousmane Kromah", "position": "RB", "college": "Florida State"}, {"name": "Owen Allen", "position": "RB", "college": "Air Force"}, {"name": "Owen McCown", "position": "QB", "college": "UTSA"}, {"name": "Parker Livingstone", "position": "WR", "college": "Oklahoma"}, {"name": "Patrick Overmyer", "position": "TE", "college": "Houston"}, {"name": "Perry Thompson", "position": "WR", "college": "Minnesota"}, {"name": "Peter Clarke", "position": "TE", "college": "Temple"}, {"name": "Peyton Jones", "position": "RB", "college": "Liberty"}, {"name": "Peyton Lewis", "position": "RB", "college": "Virginia"}, {"name": "Peyton Woodring", "position": "K", "college": "Georgia"}, {"name": "Pofele Ashlock", "position": "WR", "college": "Hawai'i"}, {"name": "Preston Bowman", "position": "WR", "college": "Ohio"}, {"name": "Quaid Carr", "position": "RB", "college": "Washington"}, {"name": "Quinn Henicle", "position": "QB", "college": "Old Dominion"}, {"name": "Quinten Joyner", "position": "RB", "college": "Texas Tech"}, {"name": "Quinton Jackson", "position": "RB", "college": "Rice"}, {"name": "Quinton Martin Jr", "position": "RB", "college": "Penn State"}, {"name": "Raleek Brown", "position": "RB", "college": "Texas"}, {"name": "Ramon Villela", "position": "K/P", "college": "UNLV"}, {"name": "Ramone Green", "position": "RB", "college": "Missouri State"}, {"name": "Randy Pittman", "position": "TE", "college": "SMU"}, {"name": "Rasean Jones", "position": "WR", "college": "Boise State"}, {"name": "Rashid Williams", "position": "WR", "college": "Washington"}, {"name": "Rayshon Luke", "position": "RB", "college": "Fresno State"}, {"name": "Reed Harris", "position": "WR", "college": "Arizona State"}, {"name": "Reed Swanson", "position": "WR", "college": "Boston College"}, {"name": "Reese Poffenbarger", "position": "QB", "college": "Akron"}, {"name": "Reis Kessel", "position": "TE", "college": "North Dakota State"}, {"name": "Richard Young", "position": "RB", "college": "Colorado"}, {"name": "Riley Williams", "position": "TE", "college": "Mississippi State"}, {"name": "Robert Briggs", "position": "RB", "college": "Southern Miss"}, {"name": "Rocco Becht", "position": "QB", "college": "Penn State"}, {"name": "Rocky Beers", "position": "TE", "college": "Oklahoma"}, {"name": "Roderick Robinson II", "position": "RB", "college": "UAB"}, {"name": "Rodney Fields", "position": "RB", "college": "Kansas State"}, {"name": "Rodney Nelson", "position": "RB", "college": "Miami (OH)"}, {"name": "Rodney Tisdale", "position": "QB", "college": "Western Kentucky"}, {"name": "Roger Saleapaga", "position": "TE", "college": "BYU"}, {"name": "Roman Gagliano", "position": "QB", "college": "Middle Tennessee"}, {"name": "Rueben Owens", "position": "RB", "college": "Texas A&M"}, {"name": "Ryan Pugliese", "position": "QB", "college": "Georgia"}, {"name": "Ryder Burton", "position": "QB", "college": "UAB"}, {"name": "Ryder Lyons", "position": "QB", "college": "BYU"}, {"name": "Salesi Moa", "position": "WR", "college": "Michigan"}, {"name": "Sam Leavitt", "position": "QB", "college": "LSU"}, {"name": "Sam Mbake", "position": "WR", "college": "Appalachian State"}, {"name": "Samuel Harris", "position": "RB", "college": "Wyoming"}, {"name": "Sawyer Seidl", "position": "RB", "college": "Wake Forest"}, {"name": "Scott Starzyk", "position": "K", "college": "LSU"}, {"name": "Scottre Humphrey", "position": "RB", "college": "New Mexico"}, {"name": "Sean Olvera-Harle", "position": "K/P", "college": "Hawai'i"}, {"name": "Sean Wilson", "position": "WR", "college": "Bryant"}, {"name": "Sedrick Alexander", "position": "RB", "college": "Vanderbilt"}, {"name": "Shekai Mills-Knight", "position": "RB", "college": "Ole Miss"}, {"name": "Shelton Sampson", "position": "WR", "college": "Louisiana"}, {"name": "Sire Gaines", "position": "RB", "college": "Boise State"}, {"name": "Skyler Locklear", "position": "QB", "college": "Missouri State"}, {"name": "Somourian Wingo", "position": "WR", "college": "Miama"}, {"name": "Spencer Porath", "position": "K", "college": "Notre Dame"}, {"name": "Steve Angeli", "position": "QB", "college": "Syracuse"}, {"name": "Stone Harrington", "position": "K", "college": "Texas Tech"}, {"name": "Sutton Smith", "position": "RB", "college": "Arkansas"}, {"name": "Tae Meadows", "position": "RB", "college": "Auburn"}, {"name": "Taeshaun Lyons", "position": "WR", "college": "UNLV"}, {"name": "Taevion Swint", "position": "RB", "college": "UCF"}, {"name": "Taji Atkins", "position": "RB", "college": "Texas State"}, {"name": "Talyn Taylor", "position": "WR", "college": "Georgia"}, {"name": "Tama Amisone", "position": "WR", "college": "San Jose State"}, {"name": "Tanook Hines", "position": "WR", "college": "USC"}, {"name": "Taron Dickens", "position": "QB", "college": "Northern Illinois"}, {"name": "Tate Sandell", "position": "K", "college": "Oklahoma"}, {"name": "Tavorus Jones", "position": "RB", "college": "UTEP"}, {"name": "Taylor Tatum", "position": "RB", "college": "Michigan"}, {"name": "Telly Johnson", "position": "RB", "college": "Northern Illinois"}, {"name": "Terrance Carter Jr", "position": "TE", "college": "Texas Tech"}, {"name": "Terrell Anderson", "position": "WR", "college": "USC"}, {"name": "Terry Bussey", "position": "WR", "college": "Texas A&M"}, {"name": "Terry Shelton", "position": "WR", "college": "TCU"}, {"name": "Thomas Meyer", "position": "TE", "college": "Iowa"}, {"name": "Toby Payne", "position": "TE", "college": "Marshall"}, {"name": "Tony Diaz", "position": "WR", "college": "Iowa"}, {"name": "Tony Freeman", "position": "WR", "college": "Washington State"}, {"name": "Tony Livingston", "position": "TE", "college": "Baylor"}, {"name": "Torrance Burgess", "position": "RB", "college": "Texas State"}, {"name": "Tory Blaylock", "position": "RB", "college": "Oklahoma"}, {"name": "Tradarian Ball", "position": "RB", "college": "Oregon"}, {"name": "Travis Burgess", "position": "QB", "college": "North Carolina"}, {"name": "Tre Richardson", "position": "WR", "college": "Louisville"}, {"name": "Tre Spivey", "position": "WR", "college": "Arizona"}, {"name": "Tre Wisner", "position": "RB", "college": "Florida State"}, {"name": "Trell Harris", "position": "WR", "college": "Oklahoma"}, {"name": "Trent Mosley", "position": "WR", "college": "USC"}, {"name": "Trent Walker", "position": "WR", "college": "Houston"}, {"name": "Trequan Jones", "position": "RB", "college": "Tulsa"}, {"name": "Trey Butkowski", "position": "K", "college": "Michigan"}, {"name": "Trey Cornist", "position": "RB", "college": "UConn"}, {"name": "Trey Kukuk", "position": "QB", "college": "Louisiana Tech"}, {"name": "Trey Owens", "position": "QB", "college": "Arkansas State"}, {"name": "TreyShun Hurry", "position": "WR", "college": "Louisville"}, {"name": "Trinidad Chambliss", "position": "QB", "college": "Ole Miss"}, {"name": "Tristian Gardner", "position": "WR", "college": "Coastal Carolina"}, {"name": "Troy Omeire", "position": "WR", "college": "New Mexico"}, {"name": "Turbo Richard", "position": "RB", "college": "Indiana"}, {"name": "Ty Clark", "position": "RB", "college": "Wake Forest"}, {"name": "Ty Thompson", "position": "TE", "college": "Tulane"}, {"name": "Tyler Brown", "position": "WR", "college": "Clemson"}, {"name": "Tyler Fortenberry", "position": "TE", "college": "Iowa State"}, {"name": "Tyler Hughes", "position": "QB", "college": "Wyoming"}, {"name": "Tyler Morris", "position": "WR", "college": "Indiana"}, {"name": "Tyler Robles", "position": "K", "college": "Washington"}, {"name": "Tyreek King", "position": "WR", "college": "Tennessee"}, {"name": "Umari Hatcher", "position": "WR", "college": "Syracuse"}, {"name": "Vernell Brown III", "position": "WR", "college": "Florida"}, {"name": "Vic Listorti", "position": "RB", "college": "Navy"}, {"name": "Victor Rosa", "position": "RB", "college": "Ohio"}, {"name": "Victor Snow", "position": "WR", "college": "North Carolina State"}, {"name": "Walker Howard", "position": "QB", "college": "Ole Miss"}, {"name": "Walker Lyons", "position": "TE", "college": "BYU"}, {"name": "Waymond Jordan", "position": "RB", "college": "USC"}, {"name": "Wayne Knight", "position": "RB", "college": "UCLA"}, {"name": "Wayshawn Parker", "position": "RB", "college": "Utah"}, {"name": "Will Hammond", "position": "QB", "college": "Texas Tech"}, {"name": "Will Henderson", "position": "RB", "college": "UTSA"}, {"name": "Willie Rodriguez", "position": "TE", "college": "Kentucky"}, {"name": "Winston Watkins", "position": "WR", "college": "LSU"}, {"name": "Wyatt Sullivan", "position": "TE", "college": "South Florida"}, {"name": "Wyatt Young", "position": "WR", "college": "Oklahoma State"}, {"name": "Xavier Robinson", "position": "RB", "college": "Oklahoma"}, {"name": "Xavier Tiller", "position": "TE", "college": "Florida State"}, {"name": "Yamir Knight", "position": "WR", "college": "SMU"}, {"name": "Yannick Smith", "position": "WR", "college": "SMU"}, {"name": "Yasin Willis", "position": "RB", "college": "Kansas"}, {"name": "Zander Smith", "position": "QB", "college": "NDSU"}, {"name": "Zeon Chriss-Gremillion", "position": "QB", "college": "Tulane"}, {"name": "Zion Booker", "position": "WR", "college": "Kennesaw State"}, {"name": "Zion Johnson", "position": "RB", "college": "Cincinnati"}, {"name": "Zion Taylor", "position": "WR", "college": "Western Kentucky"}, {"name": "Jayden Wade", "position": "QB", "college": "High School"}]};
+
+const DEFAULT_PERIODS = [
+  { id: 'p_2026_07', label: 'July 2026', opensAt: '2026-07-06T00:00:00-05:00', closesAt: '2026-07-12T00:00:00-05:00' },
+  { id: 'p_2026_08', label: 'August 2026', opensAt: '2026-08-03T00:00:00-05:00', closesAt: '2026-08-15T00:00:00-05:00' }
+];
+
+const ADMIN_CODE = 'commish';
+const AUDIT_CODE = 'showraw';
+
+let leagueData = null;
+let periods = [];
+let currentPeriod = null;
+let selectedTeam = null;
+let claims = [];
+let myEntry = null;
+
+const $ = (id) => document.getElementById(id);
+
+function showToast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ===== Google Sheets backend adapter =====
+// Paste your deployed Apps Script Web App URL here (ends in /exec).
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwAS7jElPiGmD8KWuXG7PpNOwczya-y5G7eqXtoP8CxU2w2td3kOvLp76WbOFOsIDr9/exec';
+
+async function storageGet(key, shared){
+  try{
+    const url = `${WEBAPP_URL}?action=get&key=${encodeURIComponent(key)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.value != null ? data.value : null;
+  }catch(e){ return null; }
+}
+async function storageSet(key, value, shared){
+  try{
+    // text/plain avoids a CORS preflight against Apps Script, which handles
+    // preflighted requests poorly in most deployment configurations.
+    await fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'set', key, value })
+    });
+    return true;
+  }catch(e){ return false; }
+}
+async function storageList(prefix, shared){
+  try{
+    let url = `${WEBAPP_URL}?action=list&prefix=${encodeURIComponent(prefix)}`;
+    if(prefix.indexOf('entry:') === 0 && window.__sessionAuditCode){
+      url += `&auditCode=${encodeURIComponent(window.__sessionAuditCode)}`;
+    }
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.keys || [];
+  }catch(e){ return []; }
+}
+
+function normName(n){ return n.toLowerCase().replace(/[^a-z]/g,''); }
+
+async function loadLeagueData(){
+  const stored = await storageGet('leaguedata', true);
+  if(stored){
+    leagueData = JSON.parse(stored);
+  } else {
+    leagueData = DEFAULT_DATA;
+    await storageSet('leaguedata', JSON.stringify(leagueData), true);
+  }
+}
+
+async function loadPeriods(){
+  const stored = await storageGet('periods', true);
+  if(stored){
+    periods = JSON.parse(stored);
+  } else {
+    periods = DEFAULT_PERIODS;
+    await storageSet('periods', JSON.stringify(periods), true);
+  }
+}
+
+function populateTeamSelect(){
+  const sel = $('teamSelect');
+  sel.innerHTML = '<option value="">Select your team&hellip;</option>';
+  Object.keys(leagueData.owners).sort((a,b)=>a.localeCompare(b)).forEach(owner=>{
+    const opt = document.createElement('option');
+    opt.value = owner; opt.textContent = owner;
+    sel.appendChild(opt);
+  });
+}
+
+function populatePeriodSelect(){
+  const sel = $('periodSelect');
+  sel.innerHTML = '';
+  periods.slice().reverse().forEach(p=>{
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.label;
+    sel.appendChild(opt);
+  });
+  currentPeriod = periods[periods.length-1];
+  sel.value = currentPeriod.id;
+  sel.addEventListener('change', ()=>{
+    currentPeriod = periods.find(p=>p.id===sel.value);
+    renderScoreboard();
+    resetForm();
+    renderReveal();
+  });
+}
+
+function periodPhase(p){
+  const now = new Date();
+  const opens = new Date(p.opensAt);
+  const closes = new Date(p.closesAt);
+  if(now < opens) return 'upcoming';
+  if(now >= closes) return 'closed';
+  return 'open';
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', timeZoneName:'short' });
+}
+
+function renderScoreboard(){
+  const p = currentPeriod;
+  $('periodLabel').textContent = p.label + ' waiver period';
+  const phase = periodPhase(p);
+  const statusEl = $('periodStatus');
+  statusEl.className = 'status ' + phase;
+  if(phase==='upcoming') statusEl.textContent = 'Opens ' + fmtDate(p.opensAt);
+  if(phase==='open') statusEl.textContent = 'Open · closes ' + fmtDate(p.closesAt);
+  if(phase==='closed') statusEl.textContent = 'Closed · results revealed';
+}
+
+function tick(){
+  if(!currentPeriod) return;
+  const phase = periodPhase(currentPeriod);
+  const target = phase==='upcoming' ? new Date(currentPeriod.opensAt) : new Date(currentPeriod.closesAt);
+  const now = new Date();
+  let diff = Math.max(0, target - now);
+  const days = Math.floor(diff/86400000); diff -= days*86400000;
+  const hrs = Math.floor(diff/3600000); diff -= hrs*3600000;
+  const mins = Math.floor(diff/60000); diff -= mins*60000;
+  const secs = Math.floor(diff/1000);
+  $('clock').textContent = `${String(days).padStart(2,'0')}:${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  if(phase !== periodPhase(currentPeriod)){
+    renderScoreboard();
+    renderReveal();
+  }
+}
+
+function rosteredNamesNormSet(excludeOwner){
+  const s = new Set();
+  Object.entries(leagueData.owners).forEach(([owner, players])=>{
+    if(owner===excludeOwner) return;
+    players.forEach(p=>s.add(normName(p.split(' - ')[0])));
+  });
+  return s;
+}
+
+function availableFreeAgents(){
+  const rosteredNow = rosteredNamesNormSet(null);
+  return leagueData.freeAgents.filter(fa => !rosteredNow.has(normName(fa.name)));
+}
+
+function renderRosterList(){
+  const owner = selectedTeam;
+  const list = $('rosterList');
+  list.innerHTML = '';
+  const roster = leagueData.owners[owner] || [];
+  if(roster.length===0){
+    list.innerHTML = '<div class="empty-note">This team has no rostered players to drop.</div>';
+    return;
+  }
+  roster.forEach(playerStr=>{
+    const row = document.createElement('div');
+    row.className = 'roster-row';
+    const parts = playerStr.split(' - ');
+    row.innerHTML = `<input type="radio" name="dropPlayer" value="${playerStr.replace(/"/g,'&quot;')}">
+      <div><div class="pname">${parts[0]}</div><div class="pmeta">${parts.slice(1).join(' &middot; ')}</div></div>`;
+    row.addEventListener('click', ()=>{
+      document.querySelectorAll('.roster-row').forEach(r=>r.classList.remove('selected'));
+      row.classList.add('selected');
+      row.querySelector('input').checked = true;
+    });
+    list.appendChild(row);
+  });
+}
+
+function renderClaimRows(){
+  const wrap = $('claimRows');
+  wrap.innerHTML = '';
+  claims.forEach((claim, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'claim-row';
+    row.innerHTML = `
+      <div class="claim-badge">${idx+1}</div>
+      <div class="claim-input-wrap">
+        <input type="text" placeholder="Search free agents or type a write-in" value="${(claim.name||'').replace(/"/g,'&quot;')}" data-idx="${idx}" class="claimInput">
+        <div class="suggestions" style="display:none;"></div>
+      </div>
+      <div class="order-btns">
+        <button type="button" data-idx="${idx}" data-dir="up">&and;</button>
+        <button type="button" data-idx="${idx}" data-dir="down">&or;</button>
+      </div>
+      <button class="btn btn-small" type="button" data-remove="${idx}">Remove</button>
+    `;
+    wrap.appendChild(row);
+  });
+
+  wrap.querySelectorAll('.claimInput').forEach(inp=>{
+    inp.addEventListener('input', onClaimInput);
+    inp.addEventListener('focus', onClaimInput);
+    inp.addEventListener('blur', ()=> setTimeout(()=>{
+      const box = inp.parentElement.querySelector('.suggestions');
+      if(box) box.style.display='none';
+    }, 150));
+  });
+  wrap.querySelectorAll('[data-dir]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = parseInt(btn.dataset.idx);
+      const dir = btn.dataset.dir;
+      const j = dir==='up' ? i-1 : i+1;
+      if(j<0 || j>=claims.length) return;
+      [claims[i], claims[j]] = [claims[j], claims[i]];
+      renderClaimRows();
+    });
+  });
+  wrap.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = parseInt(btn.dataset.remove);
+      claims.splice(i,1);
+      renderClaimRows();
+    });
+  });
+  $('addClaimBtn').disabled = claims.length >= 5;
+}
+
+function onClaimInput(e){
+  const idx = parseInt(e.target.dataset.idx);
+  const val = e.target.value;
+  claims[idx].name = val;
+  const box = e.target.parentElement.querySelector('.suggestions');
+  if(val.trim().length < 1){ box.style.display='none'; return; }
+  const q = val.toLowerCase();
+  const pool = availableFreeAgents();
+  const matches = pool.filter(fa=>fa.name.toLowerCase().includes(q)).slice(0,8);
+  if(matches.length===0){ box.style.display='none'; return; }
+  box.innerHTML = '';
+  matches.forEach(fa=>{
+    const d = document.createElement('div');
+    d.textContent = `${fa.name} \u2014 ${fa.position||'?'} \u00b7 ${fa.college||'?'}`;
+    d.addEventListener('mousedown', ()=>{
+      claims[idx].name = fa.name;
+      e.target.value = fa.name;
+      box.style.display='none';
+    });
+    box.appendChild(d);
+  });
+  box.style.display='block';
+}
+
+function resetForm(){
+  selectedTeam = $('teamSelect').value || null;
+  claims = [{name:''}];
+  $('rosterSection').style.display = selectedTeam ? 'block':'none';
+  $('claimsSection').style.display = selectedTeam ? 'block':'none';
+  $('submitRow').style.display = selectedTeam ? 'flex':'none';
+  $('saveNote').textContent = '';
+  if(selectedTeam){
+    renderRosterList();
+    loadMyEntry();
+  }
+}
+
+async function loadMyEntry(){
+  const key = `entry:${currentPeriod.id}:${selectedTeam}`;
+  const raw = await storageGet(key, true);
+  if(raw){
+    myEntry = JSON.parse(raw);
+    claims = myEntry.claims.length ? myEntry.claims.map(c=>({name:c})) : [{name:''}];
+    renderClaimRows();
+    setTimeout(()=>{
+      const radios = document.querySelectorAll('.roster-row input');
+      radios.forEach(r=>{
+        if(r.value === myEntry.drop){
+          r.checked = true;
+          r.closest('.roster-row').classList.add('selected');
+        }
+      });
+    }, 30);
+    $('saveNote').textContent = 'Loaded your existing entry \u2014 submitting again will update it.';
+  } else {
+    myEntry = null;
+    renderClaimRows();
+  }
+}
+
+async function submitEntry(){
+  const dropRadio = document.querySelector('input[name="dropPlayer"]:checked');
+  const roster = leagueData.owners[selectedTeam] || [];
+  if(roster.length > 0 && !dropRadio){
+    showToast('Select a player to drop first');
+    return;
+  }
+  const cleanClaims = claims.map(c=>c.name.trim()).filter(Boolean);
+  if(cleanClaims.length === 0){
+    showToast('Add at least one free agent claim');
+    return;
+  }
+  const phase = periodPhase(currentPeriod);
+  if(phase === 'closed'){
+    showToast('This period is closed');
+    return;
+  }
+  const entry = {
+    owner: selectedTeam,
+    drop: dropRadio ? dropRadio.value : null,
+    claims: cleanClaims,
+    submittedAt: new Date().toISOString()
+  };
+  const key = `entry:${currentPeriod.id}:${selectedTeam}`;
+  const ok = await storageSet(key, JSON.stringify(entry), true);
+  if(ok){
+    showToast('Entry submitted');
+    $('saveNote').textContent = 'Saved ' + new Date().toLocaleTimeString();
+    myEntry = entry;
+  } else {
+    showToast('Could not save \u2014 try again');
+  }
+}
+
+async function loadEntriesForPeriod(periodId){
+  const keys = await storageList(`entry:${periodId}:`, true);
+  const entries = [];
+  if(keys){
+    for(const k of keys){
+      const raw = await storageGet(k, true);
+      if(raw) entries.push(JSON.parse(raw));
+    }
+  }
+  entries.sort((a,b)=>a.owner.localeCompare(b.owner));
+  return entries;
+}
+
+function resolveSingleDrop(entries, waiverOrder){
+  const byOwner = {};
+  entries.forEach(e=>{ byOwner[e.owner] = e; });
+  const orderedOwners = waiverOrder.slice();
+  entries.forEach(e=>{ if(!orderedOwners.includes(e.owner)) orderedOwners.push(e.owner); });
+  const takenFA = new Set();
+  const results = [];
+  orderedOwners.forEach(owner=>{
+    const entry = byOwner[owner];
+    if(!entry) return;
+    for(const claim of entry.claims){
+      const norm = normName(claim);
+      if(!takenFA.has(norm)){
+        takenFA.add(norm);
+        results.push({ owner, drop: entry.drop, added: claim });
+        break;
+      }
+    }
+  });
+  return results;
+}
+
+async function renderReveal(){
+  const area = $('revealArea');
+  const phase = periodPhase(currentPeriod);
+  if(phase !== 'closed'){
+    area.innerHTML = `<div class="locked-banner"><i>&#128274;</i> Results for ${currentPeriod.label} stay hidden until the period closes (${fmtDate(currentPeriod.closesAt)}).</div>`;
+    return;
+  }
+  area.innerHTML = '<div class="locked-banner">Loading entries&hellip;</div>';
+  const entries = await loadEntriesForPeriod(currentPeriod.id);
+  if(entries.length===0){
+    area.innerHTML = '<div class="locked-banner">No entries were submitted this period.</div>';
+    return;
+  }
+
+  let html = '';
+
+  const flagRaw = await storageGet(`flag:${currentPeriod.id}`, true);
+  if(flagRaw){
+    const flag = JSON.parse(flagRaw);
+    html += `<div class="locked-banner" style="border-color:var(--scarlet);color:var(--bone-dim);margin-bottom:14px;"><i>&#9888;</i>&nbsp; Raw submissions for this period were viewed by the commissioner on ${fmtDate(flag.viewedAt)}.</div>`;
+  }
+
+  const orderRaw = await storageGet(`waiverorder:${currentPeriod.id}`, true);
+  if(!orderRaw){
+    html += '<div class="locked-banner">Entries are in, but results are waiting on the commissioner to enter this period\'s waiver order.</div>';
+    area.innerHTML = html;
+  } else {
+    const waiverOrder = JSON.parse(orderRaw);
+    const results = resolveSingleDrop(entries, waiverOrder);
+    if(results.length === 0){
+      html += '<div class="locked-banner">No claims were successful this period.</div>';
+    } else {
+      html += '<table class="reveal"><tr><th>Team</th><th>Dropped</th><th>Added</th></tr>';
+      results.forEach(r=>{
+        html += `<tr><td>${r.owner}</td><td class="drop-pill">${r.drop || '\u2014'}</td><td><span class="claim-pill">${r.added}</span></td></tr>`;
+      });
+      html += '</table>';
+    }
+    area.innerHTML = html;
+  }
+
+  if(window.__rawUnlockedPeriod === currentPeriod.id){
+    let rawHtml = '<hr class="divider"><h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Raw submissions (unlocked)</h3>';
+    rawHtml += '<table class="reveal"><tr><th>Team</th><th>Dropping</th><th>Claims (ranked)</th><th>Submitted</th></tr>';
+    entries.forEach(e=>{
+      const claimPills = e.claims.map((c,i)=>`<span class="claim-pill"><b>${i+1}</b> ${c}</span>`).join('');
+      const submitted = e.submittedAt ? fmtDate(e.submittedAt) : '\u2014';
+      rawHtml += `<tr><td>${e.owner}</td><td class="drop-pill">${e.drop || '\u2014'}</td><td>${claimPills}</td><td style="white-space:nowrap;color:var(--muted);font-size:12px;">${submitted}</td></tr>`;
+    });
+    rawHtml += '</table>';
+    area.innerHTML += rawHtml;
+  }
+}
+
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  if(m === 0) return n;
+  if(n === 0) return m;
+  const dp = Array.from({length: m+1}, ()=> new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0] = i;
+  for(let j=0;j<=n;j++) dp[0][j] = j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      const cost = a[i-1] === b[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
+    }
+  }
+  return dp[m][n];
+}
+
+function nameSimilarity(a, b){
+  const dist = levenshtein(a, b);
+  const maxLen = Math.max(a.length, b.length, 1);
+  return 1 - (dist / maxLen);
+}
+
+function findPossibleDuplicateNames(names){
+  const flagged = [];
+  for(let i=0;i<names.length;i++){
+    for(let j=i+1;j<names.length;j++){
+      const a = normName(names[i]);
+      const b = normName(names[j]);
+      if(!a || !b || a === b) continue;
+      if(a.length < 3 || b.length < 3) continue;
+      if(nameSimilarity(a, b) >= 0.82){
+        flagged.push([names[i], names[j]]);
+      }
+    }
+  }
+  return flagged;
+}
+
+async function checkDuplicateWriteins(){
+  const box = $('dupWarningBox');
+  if(!box) return;
+  const entries = await loadEntriesForPeriod(currentPeriod.id);
+  let allNames = [];
+  entries.forEach(e=>{
+    if(e.claims) allNames = allNames.concat(e.claims);
+    if(e.pairs) allNames = allNames.concat(e.pairs.map(p=>p.add));
+  });
+  const dups = findPossibleDuplicateNames(allNames);
+  if(dups.length === 0){
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = `<div class="locked-banner" style="border-color:var(--brass);color:var(--bone-dim);margin-bottom:16px;"><i>&#9888;</i>&nbsp; ${dups.length} pair${dups.length>1?'s':''} of claims this period look like they might be the same player with a spelling difference. Names aren\'t shown here to keep submissions hidden \u2014 use the audit code below to review raw submissions before finalizing the waiver order.</div>`;
+}
+
+function setupAdmin(){
+  $('adminToggle').addEventListener('click', ()=>{
+    const p = $('adminPanel');
+    p.style.display = p.style.display==='none' ? 'block':'none';
+  });
+  $('adminUnlockBtn').addEventListener('click', ()=>{
+    if($('adminCode').value === ADMIN_CODE){
+      $('adminGate').style.display='none';
+      $('adminControls').style.display='block';
+      $('leagueDataBox').value = JSON.stringify(leagueData, null, 2);
+      $('periodsDataBox').value = JSON.stringify(periods, null, 2);
+      storageGet(`waiverorder:${currentPeriod.id}`, true).then(r=>{
+        $('waiverOrderBox').value = r ? JSON.parse(r).join('\n') : '';
+      });
+      checkDuplicateWriteins();
+    } else {
+      showToast('Wrong code');
+    }
+  });
+  $('createPeriodBtn').addEventListener('click', async ()=>{
+    const label = $('newPeriodLabel').value.trim();
+    const openVal = $('newPeriodOpen').value.trim();
+    const closeVal = $('newPeriodClose').value.trim();
+    if(!label || !openVal || !closeVal){ showToast('Fill in all period fields'); return; }
+    const id = 'p_' + Date.now();
+    const newPeriod = { id, label, opensAt: openVal + '-05:00', closesAt: closeVal + '-05:00' };
+    periods.push(newPeriod);
+    await storageSet('periods', JSON.stringify(periods), true);
+    showToast('Period created');
+    populatePeriodSelect();
+    $('periodSelect').value = id;
+    currentPeriod = newPeriod;
+    renderScoreboard();
+    resetForm();
+    renderReveal();
+  });
+  $('saveLeagueDataBtn').addEventListener('click', async ()=>{
+    try{
+      const parsed = JSON.parse($('leagueDataBox').value);
+      leagueData = parsed;
+      await storageSet('leaguedata', JSON.stringify(leagueData), true);
+      populateTeamSelect();
+      showToast('League data saved');
+    }catch(e){
+      showToast('Invalid JSON');
+    }
+  });
+  $('savePeriodsBtn').addEventListener('click', async ()=>{
+    try{
+      const parsed = JSON.parse($('periodsDataBox').value);
+      periods = parsed;
+      await storageSet('periods', JSON.stringify(periods), true);
+      populatePeriodSelect();
+      renderScoreboard();
+      resetForm();
+      renderReveal();
+      showToast('Periods saved');
+    }catch(e){
+      showToast('Invalid JSON');
+    }
+  });
+  $('saveWaiverOrderBtn').addEventListener('click', async ()=>{
+    const lines = $('waiverOrderBox').value.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(lines.length === 0){ showToast('Enter at least one team'); return; }
+    const unknown = lines.filter(l=>!Object.keys(leagueData.owners).includes(l));
+    if(unknown.length > 0){ showToast('Unknown team(s): ' + unknown.join(', ')); return; }
+    await storageSet(`waiverorder:${currentPeriod.id}`, JSON.stringify(lines), true);
+    showToast('Waiver order saved \u2014 results resolved');
+    renderReveal();
+  });
+  $('viewRawBtn').addEventListener('click', async ()=>{
+    if($('auditCodeInput').value !== AUDIT_CODE){ showToast('Wrong audit code'); return; }
+    window.__sessionAuditCode = AUDIT_CODE;
+    const flagRaw = await storageGet(`flag:${currentPeriod.id}`, true);
+    if(!flagRaw){
+      await storageSet(`flag:${currentPeriod.id}`, JSON.stringify({viewedAt: new Date().toISOString()}), true);
+    }
+    window.__rawUnlockedPeriod = currentPeriod.id;
+    showToast('Raw submissions unlocked \u2014 period flagged');
+    renderReveal();
+  });
+}
+
+async function init(){
+  await loadLeagueData();
+  await loadPeriods();
+  populateTeamSelect();
+  populatePeriodSelect();
+  renderScoreboard();
+  renderClaimRows();
+  renderReveal();
+  setupAdmin();
+
+  $('teamSelect').addEventListener('change', resetForm);
+  $('addClaimBtn').addEventListener('click', ()=>{
+    if(claims.length < 5){ claims.push({name:''}); renderClaimRows(); }
+  });
+  $('submitBtn').addEventListener('click', submitEntry);
+
+  tick();
+  setInterval(tick, 1000);
+}
+
+init();
+</script>
+</body>
+</html>

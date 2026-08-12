@@ -621,7 +621,17 @@ async function submitEntry(){
     submittedAt: new Date().toISOString()
   };
   const key = `entry:${currentPeriod.id}:${selectedTeam}`;
-  const ok = await storageSet(key, JSON.stringify(entry), true);
+  const btn = $('submitBtn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  let ok;
+  try {
+    ok = await storageSet(key, JSON.stringify(entry), true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
   if(ok){
     showToast('Entry submitted');
     $('teamSelect').value = '';

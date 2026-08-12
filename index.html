@@ -624,8 +624,14 @@ async function submitEntry(){
   const ok = await storageSet(key, JSON.stringify(entry), true);
   if(ok){
     showToast('Entry submitted');
-    $('saveNote').textContent = 'Saved ' + new Date().toLocaleTimeString();
-    myEntry = entry;
+    $('teamSelect').value = '';
+    selectedTeam = null;
+    claims = [{name:''}];
+    myEntry = null;
+    $('rosterSection').style.display = 'none';
+    $('claimsSection').style.display = 'none';
+    $('submitRow').style.display = 'none';
+    $('saveNote').textContent = '';
   } else {
     showToast('Could not save \u2014 try again');
   }

@@ -338,12 +338,13 @@ async function storageSet(key, value, shared){
   try{
     // text/plain avoids a CORS preflight against Apps Script, which handles
     // preflighted requests poorly in most deployment configurations.
-    await fetch(WEBAPP_URL, {
+    const res = await fetch(WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'set', key, value })
     });
-    return true;
+    const data = await res.json();
+    return !!data.ok;
   }catch(e){ return false; }
 }
 async function storageList(prefix, shared){

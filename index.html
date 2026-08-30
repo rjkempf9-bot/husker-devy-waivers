@@ -219,6 +219,12 @@
       <option value="">Select your team&hellip;</option>
     </select>
 
+    <div id="pinSection" style="margin-top:14px;display:none;">
+      <label class="field-label" id="pinLabel">Set a PIN (2 digits)</label>
+      <input type="text" id="pinInput" maxlength="2" inputmode="numeric" placeholder="e.g. 42" style="max-width:100px;">
+      <p class="muted" style="font-size:12px;margin-top:4px;">Used to edit or cancel this entry later. Forgot it? Ask your commissioner.</p>
+    </div>
+
     <div id="rosterSection" style="margin-top:16px;display:none;">
       <label class="field-label">Player you are dropping</label>
       <div class="roster-list" id="rosterList"></div>
@@ -226,12 +232,14 @@
 
     <div id="claimsSection" style="margin-top:20px;display:none;">
       <label class="field-label">Free agent claims (ranked, up to 5)</label>
+      <p style="font-size:12px;margin:-4px 0 10px;color:var(--brass);"><b>Important:</b> submit all of your claims at once. A new submission completely replaces your previous one — it does not add to it.</p>
       <div id="claimRows"></div>
       <button class="btn btn-small" id="addClaimBtn" type="button">+ Add claim</button>
     </div>
 
     <div class="actions" id="submitRow" style="display:none;">
       <button class="btn btn-primary" id="submitBtn" type="button">Submit entry</button>
+      <button class="btn" id="cancelEntryBtn" type="button" style="display:none;">Cancel my entry</button>
       <span class="save-note" id="saveNote"></span>
     </div>
   </div>
@@ -284,6 +292,11 @@
       <p class="muted" style="font-size:12px;">Paste team names in priority order, one per line, highest priority first. Results resolve automatically once this is saved — raw submissions stay hidden from everyone.</p>
       <textarea id="waiverOrderBox" style="min-height:100px;" placeholder="team1&#10;team2&#10;team3"></textarea>
       <div class="actions"><button class="btn" id="saveWaiverOrderBtn" type="button">Save waiver order</button></div>
+      <hr class="divider">
+      <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Apply results to rosters</h3>
+      <p class="muted" style="font-size:12px;">Uses this period's saved waiver order to compute results, then moves the dropped/added players between rosters and the free agent pool for you. Preview first, then apply.</p>
+      <div class="actions"><button class="btn" id="previewApplyBtn" type="button">Preview roster changes</button></div>
+      <div id="applyPreviewArea"></div>
       <hr class="divider">
       <h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">View raw submissions</h3>
       <p class="muted" style="font-size:12px;">A separate audit code, for dispute review only. Using it permanently flags this period as reviewed, visible to everyone.</p>
@@ -357,6 +370,17 @@ async function storageList(prefix, shared){
     const data = await res.json();
     return data.keys || [];
   }catch(e){ return []; }
+}
+async function storageDelete(key, shared){
+  try{
+    const res = await fetch(WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'delete', key })
+    });
+    const data = await res.json();
+    return !!data.ok;
+  }catch(e){ return false; }
 }
 
 function normName(n){ return n.toLowerCase().replace(/[^a-z]/g,''); }
@@ -565,9 +589,12 @@ function onClaimInput(e){
 function resetForm(){
   selectedTeam = $('teamSelect').value || null;
   claims = [{name:''}];
+  $('pinSection').style.display = selectedTeam ? 'block':'none';
+  $('pinInput').value = '';
   $('rosterSection').style.display = selectedTeam ? 'block':'none';
   $('claimsSection').style.display = selectedTeam ? 'block':'none';
   $('submitRow').style.display = selectedTeam ? 'flex':'none';
+  $('cancelEntryBtn').style.display = 'none';
   $('saveNote').textContent = '';
   if(selectedTeam){
     renderRosterList();
@@ -581,6 +608,7 @@ async function loadMyEntry(){
   if(raw){
     myEntry = JSON.parse(raw);
     claims = myEntry.claims.length ? myEntry.claims.map(c=>({name:c})) : [{name:''}];
+    $('pinLabel').textContent = 'Enter your PIN to edit or cancel';
     renderClaimRows();
     setTimeout(()=>{
       const radios = document.querySelectorAll('.roster-row input');
@@ -592,9 +620,12 @@ async function loadMyEntry(){
       });
     }, 30);
     $('saveNote').textContent = 'Loaded your existing entry \u2014 submitting again will update it.';
+    $('cancelEntryBtn').style.display = periodPhase(currentPeriod) === 'closed' ? 'none' : 'inline-block';
   } else {
     myEntry = null;
     renderClaimRows();
+    $('pinLabel').textContent = 'Set a PIN (2 digits)';
+    $('cancelEntryBtn').style.display = 'none';
   }
 }
 
@@ -615,8 +646,18 @@ async function submitEntry(){
     showToast('This period is closed');
     return;
   }
+  const pinVal = $('pinInput').value.trim();
+  if(!/^\d{2}$/.test(pinVal)){
+    showToast('Enter a 2-digit PIN');
+    return;
+  }
+  if(myEntry && pinVal !== myEntry.pin){
+    showToast('Incorrect PIN');
+    return;
+  }
   const entry = {
     owner: selectedTeam,
+    pin: pinVal,
     drop: dropRadio ? dropRadio.value : null,
     claims: cleanClaims,
     submittedAt: new Date().toISOString()
@@ -639,6 +680,8 @@ async function submitEntry(){
     selectedTeam = null;
     claims = [{name:''}];
     myEntry = null;
+    $('pinSection').style.display = 'none';
+    $('pinInput').value = '';
     $('rosterSection').style.display = 'none';
     $('claimsSection').style.display = 'none';
     $('submitRow').style.display = 'none';
@@ -726,11 +769,11 @@ async function renderReveal(){
 
   if(window.__rawUnlockedPeriod === currentPeriod.id){
     let rawHtml = '<hr class="divider"><h3 style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Raw submissions (unlocked)</h3>';
-    rawHtml += '<table class="reveal"><tr><th>Team</th><th>Dropping</th><th>Claims (ranked)</th><th>Submitted</th></tr>';
+    rawHtml += '<table class="reveal"><tr><th>Team</th><th>PIN</th><th>Dropping</th><th>Claims (ranked)</th><th>Submitted</th></tr>';
     entries.forEach(e=>{
       const claimPills = e.claims.map((c,i)=>`<span class="claim-pill"><b>${i+1}</b> ${c}</span>`).join('');
       const submitted = e.submittedAt ? fmtDate(e.submittedAt) : '\u2014';
-      rawHtml += `<tr><td>${e.owner}</td><td class="drop-pill">${e.drop || '\u2014'}</td><td>${claimPills}</td><td style="white-space:nowrap;color:var(--muted);font-size:12px;">${submitted}</td></tr>`;
+      rawHtml += `<tr><td>${e.owner}</td><td>${e.pin || '\u2014'}</td><td class="drop-pill">${e.drop || '\u2014'}</td><td>${claimPills}</td><td style="white-space:nowrap;color:var(--muted);font-size:12px;">${submitted}</td></tr>`;
     });
     rawHtml += '</table>';
     area.innerHTML += rawHtml;
@@ -790,6 +833,83 @@ async function checkDuplicateWriteins(){
     return;
   }
   box.innerHTML = `<div class="locked-banner" style="border-color:var(--brass);color:var(--bone-dim);margin-bottom:16px;"><i>&#9888;</i>&nbsp; ${dups.length} pair${dups.length>1?'s':''} of claims this period look like they might be the same player with a spelling difference. Names aren\'t shown here to keep submissions hidden \u2014 use the audit code below to review raw submissions before finalizing the waiver order.</div>`;
+}
+
+function findFAInfo_(name){
+  const norm = normName(name);
+  return leagueData.freeAgents.find(fa => normName(fa.name) === norm);
+}
+
+async function computeRosterChanges(){
+  const entries = await loadEntriesForPeriod(currentPeriod.id);
+  const orderRaw = await storageGet(`waiverorder:${currentPeriod.id}`, true);
+  if(!orderRaw) return null;
+  const waiverOrder = JSON.parse(orderRaw);
+  const results = resolveSingleDrop(entries, waiverOrder);
+  return results.map(r => ({ owner: r.owner, dropFull: r.drop, addName: r.added }));
+}
+
+async function previewApply(){
+  const area = $('applyPreviewArea');
+  area.innerHTML = '<div class="locked-banner">Computing…</div>';
+  const changes = await computeRosterChanges();
+  if(changes === null){
+    area.innerHTML = '<div class="locked-banner">No waiver order saved for this period yet — save one above first.</div>';
+    return;
+  }
+  if(changes.length === 0){
+    area.innerHTML = '<div class="locked-banner">No successful claims to apply for this period.</div>';
+    return;
+  }
+  const appliedRaw = await storageGet(`applied:${currentPeriod.id}`, true);
+  let html = '';
+  if(appliedRaw){
+    const applied = JSON.parse(appliedRaw);
+    html += `<div class="locked-banner" style="border-color:var(--brass);margin-bottom:12px;"><i>&#9888;</i>&nbsp; This period's results were already applied on ${fmtDate(applied.appliedAt)}. Applying again may create duplicate roster/free-agent entries unless something changed since.</div>`;
+  }
+  html += '<table class="reveal"><tr><th>Team</th><th>Dropping</th><th>Adding</th></tr>';
+  changes.forEach(c=>{
+    const faInfo = findFAInfo_(c.addName);
+    const addLabel = faInfo ? `${faInfo.name} - ${faInfo.position||'?'} - ${faInfo.college||'?'}` : `${c.addName} (not found in current FA pool — will add with unknown position/college)`;
+    html += `<tr><td>${c.owner}</td><td>${c.dropFull || '—'}</td><td>${addLabel}</td></tr>`;
+  });
+  html += '</table>';
+  html += '<div class="actions" style="margin-top:12px;"><button class="btn btn-primary" id="confirmApplyBtn" type="button">Apply these changes</button></div>';
+  area.innerHTML = html;
+  $('confirmApplyBtn').addEventListener('click', ()=>applyRosterChanges(changes));
+}
+
+async function applyRosterChanges(changes){
+  changes.forEach(c=>{
+    const roster = leagueData.owners[c.owner];
+    if(!roster) return;
+    if(c.dropFull){
+      const idx = roster.findIndex(p=>p===c.dropFull);
+      if(idx>=0) roster.splice(idx,1);
+      const parts = c.dropFull.split(' - ');
+      leagueData.freeAgents.push({name: parts[0], position: parts[1]||'', college: parts[2]||''});
+    }
+    const faIdx = leagueData.freeAgents.findIndex(fa=>normName(fa.name)===normName(c.addName));
+    let addFull;
+    if(faIdx>=0){
+      const fa = leagueData.freeAgents[faIdx];
+      addFull = `${fa.name} - ${fa.position||'?'} - ${fa.college||'?'}`;
+      leagueData.freeAgents.splice(faIdx,1);
+    } else {
+      addFull = `${c.addName} - ? - ?`;
+    }
+    roster.push(addFull);
+  });
+  const ok = await storageSet('leaguedata', JSON.stringify(leagueData), true);
+  if(ok){
+    await storageSet(`applied:${currentPeriod.id}`, JSON.stringify({appliedAt: new Date().toISOString()}), true);
+    showToast('Rosters and free agent pool updated');
+    populateTeamSelect();
+    $('leagueDataBox').value = JSON.stringify(leagueData, null, 2);
+    $('applyPreviewArea').innerHTML = '<div class="locked-banner">Applied — rosters and free agent pool updated.</div>';
+  } else {
+    showToast('Could not save changes — try again');
+  }
 }
 
 function setupAdmin(){
@@ -862,6 +982,7 @@ function setupAdmin(){
     showToast('Waiver order saved \u2014 results resolved');
     renderReveal();
   });
+  $('previewApplyBtn').addEventListener('click', previewApply);
   $('viewRawBtn').addEventListener('click', async ()=>{
     if($('auditCodeInput').value !== AUDIT_CODE){ showToast('Wrong audit code'); return; }
     window.__sessionAuditCode = AUDIT_CODE;
@@ -873,6 +994,51 @@ function setupAdmin(){
     showToast('Raw submissions unlocked \u2014 period flagged');
     renderReveal();
   });
+}
+
+async function cancelEntry(){
+  if(!selectedTeam){ return; }
+  const phase = periodPhase(currentPeriod);
+  if(phase === 'closed'){
+    showToast('This period is closed \u2014 entries can no longer be changed');
+    return;
+  }
+  const pinVal = $('pinInput').value.trim();
+  if(!myEntry || pinVal !== myEntry.pin){
+    showToast('Incorrect PIN');
+    return;
+  }
+  const confirmed = confirm(`Cancel ${selectedTeam}'s entry for ${currentPeriod.label}? This cannot be undone.`);
+  if(!confirmed) return;
+
+  const key = `entry:${currentPeriod.id}:${selectedTeam}`;
+  const btn = $('cancelEntryBtn');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Cancelling\u2026';
+  let ok;
+  try {
+    ok = await storageDelete(key, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+  if(ok){
+    showToast('Entry cancelled');
+    $('teamSelect').value = '';
+    selectedTeam = null;
+    claims = [{name:''}];
+    myEntry = null;
+    $('pinSection').style.display = 'none';
+    $('pinInput').value = '';
+    $('rosterSection').style.display = 'none';
+    $('claimsSection').style.display = 'none';
+    $('submitRow').style.display = 'none';
+    $('cancelEntryBtn').style.display = 'none';
+    $('saveNote').textContent = '';
+  } else {
+    showToast('Could not cancel \u2014 try again');
+  }
 }
 
 async function init(){
@@ -890,6 +1056,7 @@ async function init(){
     if(claims.length < 5){ claims.push({name:''}); renderClaimRows(); }
   });
   $('submitBtn').addEventListener('click', submitEntry);
+  $('cancelEntryBtn').addEventListener('click', cancelEntry);
 
   tick();
   setInterval(tick, 1000);
